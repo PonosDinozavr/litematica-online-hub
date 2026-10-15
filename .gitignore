@@ -1,0 +1,37 @@
+# Gradle
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Runtime / OS
+*.log
+.DS_Store
+Thumbs.db
+
+# Compile-time dependencies, downloaded locally (see README)
+libs/
+
+# IDE scratch output
+bin/
+out/
+
+# Scratch notes produced while reverse-engineering MC internals
+*_methods.txt
+sp_full.txt
+container_methods.txt
+entity_methods.txt
+entitytype_methods.txt
+inv_methods.txt
+la_methods.txt
+level_methods.txt
+pl_methods.txt
+player_methods.txt
+scpli_methods.txt
+sgpli_methods.txt
+sl_methods.txt
+sp_methods.txt

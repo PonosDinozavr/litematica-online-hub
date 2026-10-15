@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "id": "litematicahub",
+  "version": "${version}",
+  "name": "Litematica Online Hub",
+  "icon": "assets/litematicahub/icon.png",
+  "description": "Browse the Litematica Online Hub gallery in-game. View schematic covers and read descriptions, search by tag and version, and download schematics straight into Litematica. Online gallery addon for Litematica in Minecraft 26.2.",
+  "authors": [
+    "ponos_dinozavr"
+  ],
+  "contact": {
+    "homepage": "https://litematica-online-hub.shop",
+    "sources": "https://litematica-online-hub.shop"
+  },
+  "license": "MIT",
+  "environment": "client",
+  "entrypoints": {
+    "main": [
+      "com.litematicahub.ModInit"
+    ],
+    "client": [
+      "com.litematicahub.ClientInit"
+    ]
+  },
+  "mixins": [
+    "litematicahub.mixins.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "26.2",
+    "java": ">=21",
+    "fabric-api": ">=0.156.0",
+    "litematica": ">=0.21.0",
+    "malilib": ">=0.24.0"
+  }
+}
