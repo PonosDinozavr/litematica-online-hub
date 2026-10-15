@@ -23,15 +23,12 @@ out/
 # Scratch notes produced while reverse-engineering MC internals
 *_methods.txt
 sp_full.txt
-container_methods.txt
-entity_methods.txt
-entitytype_methods.txt
-inv_methods.txt
-la_methods.txt
-level_methods.txt
-pl_methods.txt
-player_methods.txt
-scpli_methods.txt
-sgpli_methods.txt
-sl_methods.txt
-sp_methods.txt
+
+# Leftovers from other projects that shared this folder
+plugin.yml
+META-INF/
+org/
+scratch_plugin/
+data/
+run/
+.idea/
