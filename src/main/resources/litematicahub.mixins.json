@@ -1,0 +1,13 @@
+{
+  "required": true,
+  "package": "com.litematicahub.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "mixins": [
+  ],
+  "client": [
+    "LitematicaMainMenuMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  }
+}
