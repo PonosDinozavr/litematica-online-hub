@@ -43,8 +43,13 @@ public final class SchematicDownloadManager {
 
     /** Resolved thumbnail URL -> registered texture (render-thread read, any-thread write). */
     private static final Map<String, Identifier> THUMBNAILS = new ConcurrentHashMap<>();
+    private static final Map<Identifier, int[]> COVER_DIMENSIONS = new ConcurrentHashMap<>();
     private static final Set<String> THUMBNAIL_LOADING = ConcurrentHashMap.newKeySet();
     private static final Set<String> THUMBNAIL_FAILED = ConcurrentHashMap.newKeySet();
+
+    public static int[] getCoverDimensions(Identifier id) {
+        return id != null ? COVER_DIMENSIONS.get(id) : null;
+    }
 
     private SchematicDownloadManager() {
     }
@@ -60,6 +65,7 @@ public final class SchematicDownloadManager {
         public int likes;
         public String downloadUrl = "";
         public String thumbnailUrl = "";
+        public String fileExt = ".litematic";
         /** all cover images for this entry (from the site's screenshots array) */
         public final List<String> covers = new ArrayList<>();
     }
@@ -238,6 +244,15 @@ public final class SchematicDownloadManager {
         return new Page(entries, total);
     }
 
+    public static String cleanVersion(String v) {
+        if (v == null) return "";
+        String s = v.trim();
+        while (s.endsWith("+")) {
+            s = s.substring(0, s.length() - 1).trim();
+        }
+        return s;
+    }
+
     public static CompletableFuture<List<String>> fetchVersions() {
         String url = API_BASE + "/versions";
         HttpRequest request = HttpRequest.newBuilder(URI.create(url))
@@ -256,7 +271,12 @@ public final class SchematicDownloadManager {
                         List<String> list = new ArrayList<>();
                         if (array != null) {
                             for (JsonElement el : array) {
-                                if (el.isJsonPrimitive()) list.add(el.getAsString());
+                                if (el.isJsonPrimitive()) {
+                                    String cv = cleanVersion(el.getAsString());
+                                    if (!cv.isEmpty() && !list.contains(cv)) {
+                                        list.add(cv);
+                                    }
+                                }
                             }
                         }
                         return list;
@@ -276,7 +296,8 @@ public final class SchematicDownloadManager {
             entry.title = value(object, "title", value(object, "name", entry.id));
             entry.author = value(object, "author", "Unknown");
             entry.tag = value(object, "tag", "");
-            entry.version = value(object, "version", "");
+            entry.version = cleanVersion(value(object, "version", ""));
+            entry.fileExt = normalizeExt(value(object, "file_ext", value(object, "ext", ".litematic")));
             entry.description = value(object, "description", "");
             entry.downloads = intValue(object, "downloads");
             entry.likes = intValue(object, "likes");
@@ -295,6 +316,13 @@ public final class SchematicDownloadManager {
             if (!entry.downloadUrl.isBlank()) result.add(entry);
         }
         return result;
+    }
+
+    private static String normalizeExt(String ext) {
+        if (ext == null || ext.isBlank()) return ".litematic";
+        String s = ext.trim().toLowerCase();
+        if (!s.startsWith(".")) s = "." + s;
+        return s;
     }
 
     private static String value(JsonObject object, String key, String fallback) {
@@ -401,6 +429,7 @@ public final class SchematicDownloadManager {
                     Identifier id = Identifier.fromNamespaceAndPath(
                             ModInit.MOD_ID, "cover_" + Integer.toHexString(url.hashCode()));
                     Minecraft.getInstance().getTextureManager().register(id, texture);
+                    COVER_DIMENSIONS.put(id, new int[]{image.getWidth(), image.getHeight()});
                     THUMBNAILS.put(url, id);
                 } catch (Exception exception) {
                     THUMBNAIL_FAILED.add(url);
@@ -456,7 +485,7 @@ public final class SchematicDownloadManager {
                     throw new IllegalStateException("server sent an empty file");
                 }
 
-                DownloadResult result = placeFile(directory, temporary, fileNameBase(entry));
+                DownloadResult result = placeFile(directory, temporary, entry);
                 temporary = null;
                 return result;
             } catch (Exception exception) {
@@ -493,9 +522,12 @@ public final class SchematicDownloadManager {
         }
     }
 
-    private static DownloadResult placeFile(Path directory, Path temporary, String base) throws Exception {
+    private static DownloadResult placeFile(Path directory, Path temporary, SchematicEntry entry) throws Exception {
+        String base = fileNameBase(entry);
+        String ext = (entry != null && entry.fileExt != null && !entry.fileExt.isBlank()) ? entry.fileExt : ".litematic";
+        if (!ext.startsWith(".")) ext = "." + ext;
         for (int copy = 1; copy <= 99; copy++) {
-            String name = copy == 1 ? base + ".schem" : base + " (" + copy + ").schem";
+            String name = copy == 1 ? base + ext : base + " (" + copy + ")" + ext;
             Path target = directory.resolve(name);
             if (!Files.exists(target)) {
                 move(temporary, target);
@@ -618,6 +650,23 @@ public final class SchematicDownloadManager {
 
     private static int parseIntSafe(String s) {
         try { return Integer.parseInt(s.trim()); } catch (Exception e) { return 0; }
+    }
+
+    public static boolean isSchematicDownloaded(SchematicEntry entry) {
+        if (entry == null) return false;
+        try {
+            Path dir = getSchematicsDirectory();
+            String base = fileNameBase(entry);
+            String ext = (entry.fileExt != null && !entry.fileExt.isBlank()) ? entry.fileExt : ".litematic";
+            if (!ext.startsWith(".")) ext = "." + ext;
+            if (Files.exists(dir.resolve(base + ext))) return true;
+            return Files.exists(dir.resolve(base + ".litematic")) ||
+                   Files.exists(dir.resolve(base + ".litematica")) ||
+                   Files.exists(dir.resolve(base + ".schem")) ||
+                   Files.exists(dir.resolve(base + ".schematic"));
+        } catch (Exception ignored) {
+            return false;
+        }
     }
 
     private static String fileNameBase(SchematicEntry entry) {

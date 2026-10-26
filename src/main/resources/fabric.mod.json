@@ -10,7 +10,7 @@
   ],
   "contact": {
     "homepage": "https://litematica-online-hub.shop",
-    "sources": "https://litematica-online-hub.shop"
+    "sources": "https://github.com/PonosDinozavr/litematica-online-hub/tree/26.2"
   },
   "license": "MIT",
   "environment": "client",
